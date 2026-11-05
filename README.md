@@ -12,6 +12,7 @@ are kept separate and unchanged.
 - Multi-item checkout that validates stock and records the sale atomically.
 - Order history with item and total details.
 - Admin-only staff account creation with individually salted password hashes.
+- Responsive background color themes saved in the current browser.
 - Responsive interface, SQLite persistence, and a standard-library Python API.
 
 ## Run locally
@@ -37,7 +38,13 @@ After signing in as the administrator, open **គ្រប់គ្រងគណ�
 dots, dashes, or underscores. Passwords must be at least 12 characters.
 Accounts are stored in the local database with a per-account random salt and
 PBKDF2 password hash. Staff can use the shop features but cannot manage
-accounts.
+accounts. On mobile, use the bottom navigation to open account management; the
+administrator can also start account creation from the dashboard. Public
+sign-up is intentionally disabled.
+
+Use the **ពណ៌ផ្ទៃ** button on the sign-in screen or the palette button in the
+top bar to choose a background color. The selected theme is saved in that
+browser and remains available before and after signing in.
 
 The local server binds to loopback by default. Do not expose it directly to the
 internet. For a real deployment, place it behind an HTTPS reverse proxy, use a

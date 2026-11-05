@@ -10,6 +10,7 @@
   </head>
   <body>
     <section id="login-screen" class="login-screen">
+      <button id="login-theme-button" class="button button-quiet login-theme-button" type="button" aria-haspopup="dialog" aria-controls="theme-dialog"><span aria-hidden="true">🎨</span> ពណ៌ផ្ទៃ</button>
       <form id="login-form" class="login-card">
         <div class="brand-mark">C<span>+</span></div>
         <p class="eyebrow">COMPUTER SHOP MANAGEMENT</p>
@@ -19,7 +20,7 @@
         <label>ពាក្យសម្ងាត់<input name="password" type="password" autocomplete="current-password" required></label>
         <p id="login-error" class="form-error" role="alert"></p>
         <button class="button button-primary button-wide" type="submit">ចូលប្រើប្រាស់</button>
-        <p class="login-hint">ប្រើគណនីដែលបានកំណត់នៅលើម៉ាស៊ីនមេ</p>
+        <p class="login-hint">ប្រើគណនីដែលបានកំណត់នៅលើម៉ាស៊ីនមេ។ មានតែអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចបង្កើតគណនីថ្មីបាន។</p>
       </form>
     </section>
 
@@ -30,13 +31,14 @@
         <button class="nav-link active" data-view="dashboard"><span class="nav-icon">⌂</span>ផ្ទាំងគ្រប់គ្រង</button>
         <button class="nav-link" data-view="products"><span class="nav-icon">▦</span>ផលិតផល និងស្តុក</button>
         <button class="nav-link" data-view="orders"><span class="nav-icon">▤</span>ប្រវត្តិការលក់</button>
-        <button id="accounts-nav" class="nav-link hidden" data-view="accounts"><span class="nav-icon">♙</span>គ្រប់គ្រងគណនី</button>
+        <button id="accounts-nav" class="nav-link hidden" data-view="accounts" aria-label="គ្រប់គ្រងគណនី"><span class="nav-icon">♙</span><span class="nav-full">គ្រប់គ្រងគណនី</span><span class="nav-short">គណនី</span></button>
         <div class="sidebar-bottom"><span class="status-dot"></span>ប្រព័ន្ធដំណើរការធម្មតា</div>
       </aside>
 
       <main class="main">
         <header class="topbar">
           <div class="mobile-brand"><span class="brand-mark">C<span>+</span></span> TechPoint</div>
+          <button id="theme-button" class="button button-quiet theme-button" type="button" aria-haspopup="dialog" aria-controls="theme-dialog" aria-label="ប្តូរពណ៌ផ្ទៃខាងក្រោយ"><span aria-hidden="true">🎨</span><span class="theme-button-label">ពណ៌ផ្ទៃខាងក្រោយ</span></button>
           <div class="topbar-spacer"></div>
           <span class="today-label" id="today-label"></span>
           <div class="user-badge"><span id="user-avatar" class="avatar">A</span><span><b id="user-name">អ្នកប្រើប្រាស់</b><small id="user-role">Staff</small></span></div>
@@ -47,7 +49,10 @@
           <section id="view-dashboard" class="view">
             <div class="page-heading">
               <div><p class="eyebrow">OVERVIEW</p><h1>ផ្ទាំងគ្រប់គ្រង</h1><p class="muted">សង្ខេបសកម្មភាពហាងរបស់អ្នក</p></div>
-              <button class="button button-primary" data-go="products" type="button"><span>＋</span> លក់ផលិតផល</button>
+              <div class="heading-actions">
+                <button id="dashboard-account-button" class="button button-outline hidden" type="button">＋ បង្កើតគណនីថ្មី</button>
+                <button class="button button-primary" data-go="products" type="button"><span>＋</span> លក់ផលិតផល</button>
+              </div>
             </div>
             <div class="stats-grid">
               <article class="stat-card"><div class="stat-top"><span>ចំណូលថ្ងៃនេះ</span><span class="stat-icon green">$</span></div><strong id="metric-revenue">$0.00</strong><small>សរុបការលក់ថ្ងៃនេះ</small></article>
@@ -73,7 +78,7 @@
           </section>
 
           <section id="view-accounts" class="view hidden">
-            <div class="page-heading"><div><p class="eyebrow">TEAM ACCESS</p><h1>គ្រប់គ្រងគណនី</h1><p class="muted">បង្កើតគណនីបុគ្គលិកសម្រាប់ចូលប្រើប្រព័ន្ធ</p></div><button id="add-account-button" class="button button-primary" type="button">＋ បង្កើតគណនីថ្មី</button></div>
+            <div class="page-heading account-heading"><div><p class="eyebrow">TEAM ACCESS</p><h1>គ្រប់គ្រងគណនី</h1><p class="muted">បង្កើតគណនីបុគ្គលិកសម្រាប់ចូលប្រើប្រព័ន្ធ</p></div><button id="add-account-button" class="button button-primary" type="button">＋ បង្កើតគណនីថ្មី</button></div>
             <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>ឈ្មោះអ្នកប្រើប្រាស់</th><th>តួនាទី</th><th>កាលបរិច្ឆេទបង្កើត</th></tr></thead><tbody id="accounts-table"></tbody></table></div></div>
           </section>
         </div>
@@ -107,12 +112,25 @@
     <dialog id="account-dialog" class="dialog">
       <form id="account-form" class="dialog-card">
         <div class="dialog-heading"><div><p class="eyebrow">TEAM ACCESS</p><h2>បង្កើតគណនីថ្មី</h2></div><button class="icon-button" type="button" data-close="account-dialog" aria-label="បិទ">×</button></div>
-        <label>ឈ្មោះអ្នកប្រើប្រាស់<input name="username" minlength="3" maxlength="40" pattern="[A-Za-z0-9_.-]+" autocomplete="off" required></label>
+        <label>ឈ្មោះអ្នកប្រើប្រាស់<input name="username" minlength="3" maxlength="40" pattern="[A-Za-z0-9_.\-]+" autocomplete="off" required></label>
         <label>ពាក្យសម្ងាត់ដំបូង<input name="password" type="password" minlength="12" maxlength="256" autocomplete="new-password" required><small class="muted">ត្រូវមានយ៉ាងតិច ១២ តួអក្សរ</small></label>
         <p class="muted">គណនីថ្មីមានសិទ្ធិបុគ្គលិក។ មានតែអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចបង្កើតគណនីបាន។</p>
         <p id="account-form-error" class="form-error" role="alert"></p>
         <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="account-dialog">បោះបង់</button><button class="button button-primary" type="submit">បង្កើតគណនី</button></div>
       </form>
+    </dialog>
+
+    <dialog id="theme-dialog" class="dialog theme-dialog">
+      <div class="dialog-card">
+        <div class="dialog-heading"><div><p class="eyebrow">APPEARANCE</p><h2>ប្តូរពណ៌ផ្ទៃខាងក្រោយ</h2></div><button class="icon-button" type="button" data-close="theme-dialog" aria-label="បិទ">×</button></div>
+        <div class="theme-options" role="group" aria-label="ជ្រើសរើសពណ៌">
+          <button class="theme-option" type="button" data-theme-choice="default" aria-pressed="true"><span class="theme-swatch swatch-default"></span>លំនាំដើម</button>
+          <button class="theme-option" type="button" data-theme-choice="blue" aria-pressed="false"><span class="theme-swatch swatch-blue"></span>ខៀវស្រាល</button>
+          <button class="theme-option" type="button" data-theme-choice="green" aria-pressed="false"><span class="theme-swatch swatch-green"></span>បៃតងស្រាល</button>
+          <button class="theme-option" type="button" data-theme-choice="lavender" aria-pressed="false"><span class="theme-swatch swatch-lavender"></span>ស្វាយស្រាល</button>
+          <button class="theme-option" type="button" data-theme-choice="sand" aria-pressed="false"><span class="theme-swatch swatch-sand"></span>ក្រែមស្រាល</button>
+        </div>
+      </div>
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>

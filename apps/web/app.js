@@ -1,9 +1,29 @@
 const state = { products: [], orders: [], user: null, activeView: "dashboard", toastTimer: null };
 const $ = (selector, root = document) => root.querySelector(selector);
 const money = (amount) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount || 0);
+const themeLabels = {
+  default: "លំនាំដើម",
+  blue: "ខៀវស្រាល",
+  green: "បៃតងស្រាល",
+  lavender: "ស្វាយស្រាល",
+  sand: "ក្រែមស្រាល"
+};
 const escapeHTML = (value) => String(value).replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
 })[char]);
+
+function applyTheme(theme) {
+  const selectedTheme = Object.prototype.hasOwnProperty.call(themeLabels, theme) ? theme : "default";
+  document.documentElement.dataset.theme = selectedTheme;
+  document.querySelectorAll("[data-theme-choice]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.themeChoice === selectedTheme));
+  });
+  $("#theme-button").setAttribute("aria-label", `ប្តូរពណ៌ផ្ទៃខាងក្រោយ៖ ${themeLabels[selectedTheme]}`);
+  $("meta[name='theme-color']").setAttribute(
+    "content",
+    getComputedStyle(document.documentElement).getPropertyValue("--page").trim()
+  );
+}
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -27,6 +47,8 @@ async function api(path, options = {}) {
 function showLogin() {
   state.user = null;
   $("#accounts-nav").classList.add("hidden");
+  $("#dashboard-account-button").classList.add("hidden");
+  if ($("#theme-dialog").open) $("#theme-dialog").close();
   $("#login-screen").classList.remove("hidden");
   $("#app-shell").classList.add("hidden");
 }
@@ -37,6 +59,7 @@ function setCurrentUser(user) {
   $("#user-avatar").textContent = user.username.slice(0, 1).toUpperCase();
   $("#user-role").textContent = user.role === "admin" ? "Administrator" : "Staff";
   $("#accounts-nav").classList.toggle("hidden", user.role !== "admin");
+  $("#dashboard-account-button").classList.toggle("hidden", user.role !== "admin");
 }
 
 function showApp() {
@@ -148,6 +171,16 @@ function openProductDialog(product = null) {
   $("#product-dialog").showModal();
 }
 
+function openAccountDialog() {
+  if (state.user?.role !== "admin") {
+    notify("មានតែអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចបង្កើតគណនីបាន");
+    return;
+  }
+  $("#account-form").reset();
+  $("#account-form-error").textContent = "";
+  $("#account-dialog").showModal();
+}
+
 function addSaleItem(productId = "") {
   if (!state.products.length) {
     notify("សូមបន្ថែមផលិតផលជាមុនសិន");
@@ -199,6 +232,19 @@ $("#logout-button").addEventListener("click", async () => {
   $("#login-form").elements.password.value = "";
 });
 
+const openThemeDialog = () => $("#theme-dialog").showModal();
+$("#theme-button").addEventListener("click", openThemeDialog);
+$("#login-theme-button").addEventListener("click", openThemeDialog);
+document.querySelectorAll("[data-theme-choice]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const theme = button.dataset.themeChoice;
+    applyTheme(theme);
+    localStorage.setItem("computer-sales-theme", theme);
+    $("#theme-dialog").close();
+  });
+});
+applyTheme(localStorage.getItem("computer-sales-theme") || "default");
+
 document.querySelectorAll(".nav-link").forEach((button) => button.addEventListener("click", () => navigate(button.dataset.view)));
 document.querySelectorAll("[data-go]").forEach((button) => button.addEventListener("click", () => {
   navigate(button.dataset.go);
@@ -207,11 +253,8 @@ document.querySelectorAll("[data-go]").forEach((button) => button.addEventListen
   }
 }));
 $("#add-product-button").addEventListener("click", () => openProductDialog());
-$("#add-account-button").addEventListener("click", () => {
-  $("#account-form").reset();
-  $("#account-form-error").textContent = "";
-  $("#account-dialog").showModal();
-});
+$("#add-account-button").addEventListener("click", openAccountDialog);
+$("#dashboard-account-button").addEventListener("click", openAccountDialog);
 $("#product-search").addEventListener("input", () => loadProducts().catch((error) => notify(error.message)));
 
 $("#account-form").addEventListener("submit", async (event) => {
@@ -228,7 +271,7 @@ $("#account-form").addEventListener("submit", async (event) => {
     form.reset();
     $("#account-dialog").close();
     notify("បានបង្កើតគណនីបុគ្គលិករួចរាល់");
-    await loadAccounts();
+    await navigate("accounts");
   } catch (error) {
     showError($("#account-form-error"), error);
   }
