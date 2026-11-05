@@ -72,6 +72,14 @@ To publish it:
    backups for important sales records; a persistent disk is not a substitute
    for an independently stored backup.
 
+If you already created a Render web service with the native Python runtime
+instead of using the Blueprint, set its root directory to the repository root,
+build command to `pip install -r requirements.txt`, and start command to
+`python main.py`. The root launcher binds to `0.0.0.0` and uses Render's
+`PORT`. Set `DATA_DIR` to the mount path of a persistent disk (for example
+`/var/lib/computer-sales`) and set the admin credentials in Render's
+environment settings. Configure `/api/health` as the health check path.
+
 The app stays a single-shop, admin-managed system. Login has an in-process
 limit of five failed attempts per username per 15 minutes. Sessions are
 process-local and will expire on service restart. Before handling sensitive

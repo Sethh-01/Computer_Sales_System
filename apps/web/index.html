@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="km">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>កុំព្យូទ័រ | ប្រព័ន្ធគ្រប់គ្រងហាង</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <section id="login-screen" class="login-screen">
+      <form id="login-form" class="login-card">
+        <div class="brand-mark">C<span>+</span></div>
+        <p class="eyebrow">COMPUTER SHOP MANAGEMENT</p>
+        <h1>សូមស្វាគមន៍</h1>
+        <p class="muted">ចូលគណនីដើម្បីបន្ត</p>
+        <label>ឈ្មោះអ្នកប្រើប្រាស់<input name="username" autocomplete="username" required></label>
+        <label>ពាក្យសម្ងាត់<input name="password" type="password" autocomplete="current-password" required></label>
+        <p id="login-error" class="form-error" role="alert"></p>
+        <button class="button button-primary button-wide" type="submit">ចូលប្រើប្រាស់</button>
+        <p class="login-hint">ប្រើគណនីដែលបានកំណត់នៅលើម៉ាស៊ីនមេ</p>
+      </form>
+    </section>
+
+    <div id="app-shell" class="app-shell hidden">
+      <aside class="sidebar">
+        <a class="brand" href="#" aria-label="ទំព័រដើម"><span class="brand-mark">C<span>+</span></span><span>Tech<span class="brand-light">Point</span></span></a>
+        <p class="nav-caption">ម៉ឺនុយ</p>
+        <button class="nav-link active" data-view="dashboard"><span class="nav-icon">⌂</span>ផ្ទាំងគ្រប់គ្រង</button>
+        <button class="nav-link" data-view="products"><span class="nav-icon">▦</span>ផលិតផល និងស្តុក</button>
+        <button class="nav-link" data-view="orders"><span class="nav-icon">▤</span>ប្រវត្តិការលក់</button>
+        <button id="accounts-nav" class="nav-link hidden" data-view="accounts"><span class="nav-icon">♙</span>គ្រប់គ្រងគណនី</button>
+        <div class="sidebar-bottom"><span class="status-dot"></span>ប្រព័ន្ធដំណើរការធម្មតា</div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="mobile-brand"><span class="brand-mark">C<span>+</span></span> TechPoint</div>
+          <div class="topbar-spacer"></div>
+          <span class="today-label" id="today-label"></span>
+          <div class="user-badge"><span id="user-avatar" class="avatar">A</span><span><b id="user-name">អ្នកប្រើប្រាស់</b><small id="user-role">Staff</small></span></div>
+          <button id="logout-button" class="button button-quiet" type="button">ចាកចេញ</button>
+        </header>
+
+        <div class="content">
+          <section id="view-dashboard" class="view">
+            <div class="page-heading">
+              <div><p class="eyebrow">OVERVIEW</p><h1>ផ្ទាំងគ្រប់គ្រង</h1><p class="muted">សង្ខេបសកម្មភាពហាងរបស់អ្នក</p></div>
+              <button class="button button-primary" data-go="products" type="button"><span>＋</span> លក់ផលិតផល</button>
+            </div>
+            <div class="stats-grid">
+              <article class="stat-card"><div class="stat-top"><span>ចំណូលថ្ងៃនេះ</span><span class="stat-icon green">$</span></div><strong id="metric-revenue">$0.00</strong><small>សរុបការលក់ថ្ងៃនេះ</small></article>
+              <article class="stat-card"><div class="stat-top"><span>ការបញ្ជាទិញថ្ងៃនេះ</span><span class="stat-icon blue">▤</span></div><strong id="metric-orders">0</strong><small>ប្រតិបត្តិការថ្ងៃនេះ</small></article>
+              <article class="stat-card"><div class="stat-top"><span>ផលិតផលសកម្ម</span><span class="stat-icon purple">▦</span></div><strong id="metric-products">0</strong><small>ប្រភេទកំពុងដាក់លក់</small></article>
+              <article class="stat-card"><div class="stat-top"><span>ស្តុកជិតអស់</span><span class="stat-icon orange">!</span></div><strong id="metric-low-stock">0</strong><small>ស្តុក ៥ ឬតិចជាងនេះ</small></article>
+            </div>
+            <div class="section-heading"><div><h2>ផលិតផលក្នុងស្តុក</h2><p class="muted">ពិនិត្យមើលផលិតផលដែលកំពុងដាក់លក់</p></div><button class="text-button" data-go="products" type="button">មើលទាំងអស់ →</button></div>
+            <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>ផលិតផល</th><th>ប្រភេទ</th><th>តម្លៃ</th><th>ស្តុក</th><th>ស្ថានភាព</th></tr></thead><tbody id="dashboard-products"></tbody></table></div></div>
+            <div class="section-heading"><div><h2>ការលក់ថ្មីៗ</h2><p class="muted">ប្រតិបត្តិការថ្មីបំផុតរបស់ហាង</p></div><button class="text-button" data-go="orders" type="button">មើលប្រវត្តិ →</button></div>
+            <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>លេខបញ្ជាទិញ</th><th>អតិថិជន</th><th>មុខទំនិញ</th><th>កាលបរិច្ឆេទ</th><th>សរុប</th></tr></thead><tbody id="dashboard-orders"></tbody></table></div></div>
+          </section>
+
+          <section id="view-products" class="view hidden">
+            <div class="page-heading"><div><p class="eyebrow">INVENTORY</p><h1>ផលិតផល និងស្តុក</h1><p class="muted">គ្រប់គ្រងកុំព្យូទ័រ គ្រឿងបន្លាស់ និងស្តុក</p></div><button id="add-product-button" class="button button-primary" type="button">＋ បន្ថែមផលិតផល</button></div>
+            <div class="panel toolbar"><label class="search-box"><span>⌕</span><input id="product-search" type="search" placeholder="ស្វែងរកឈ្មោះ ឬ SKU..."></label><span id="product-count" class="muted"></span></div>
+            <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>ផលិតផល</th><th>SKU</th><th>ប្រភេទ</th><th>តម្លៃ</th><th>ស្តុក</th><th>សកម្មភាព</th></tr></thead><tbody id="products-table"></tbody></table></div></div>
+          </section>
+
+          <section id="view-orders" class="view hidden">
+            <div class="page-heading"><div><p class="eyebrow">SALES</p><h1>ប្រវត្តិការលក់</h1><p class="muted">បញ្ជីការបញ្ជាទិញ និងប្រតិបត្តិការទាំងអស់</p></div><button class="button button-primary" data-go="products" type="button">＋ បង្កើតការលក់</button></div>
+            <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>លេខបញ្ជាទិញ</th><th>អតិថិជន</th><th>ទំនិញ</th><th>កាលបរិច្ឆេទ</th><th>សរុប</th></tr></thead><tbody id="orders-table"></tbody></table></div></div>
+          </section>
+
+          <section id="view-accounts" class="view hidden">
+            <div class="page-heading"><div><p class="eyebrow">TEAM ACCESS</p><h1>គ្រប់គ្រងគណនី</h1><p class="muted">បង្កើតគណនីបុគ្គលិកសម្រាប់ចូលប្រើប្រព័ន្ធ</p></div><button id="add-account-button" class="button button-primary" type="button">＋ បង្កើតគណនីថ្មី</button></div>
+            <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>ឈ្មោះអ្នកប្រើប្រាស់</th><th>តួនាទី</th><th>កាលបរិច្ឆេទបង្កើត</th></tr></thead><tbody id="accounts-table"></tbody></table></div></div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="product-dialog" class="dialog">
+      <form id="product-form" class="dialog-card">
+        <div class="dialog-heading"><div><p class="eyebrow">INVENTORY</p><h2 id="product-dialog-title">បន្ថែមផលិតផល</h2></div><button class="icon-button" type="button" data-close="product-dialog" aria-label="បិទ">×</button></div>
+        <input name="id" type="hidden">
+        <label>ឈ្មោះផលិតផល<input name="name" maxlength="120" required></label>
+        <div class="form-row"><label>SKU<input name="sku" maxlength="40" required></label><label>ប្រភេទ<input name="category" maxlength="60" placeholder="Laptop, Monitor..." required></label></div>
+        <div class="form-row"><label>តម្លៃ ($)<input name="price" type="number" min="0" max="1000000" step="0.01" required></label><label>ចំនួនស្តុក<input name="stock" type="number" min="0" max="1000000" step="1" required></label></div>
+        <p id="product-form-error" class="form-error" role="alert"></p>
+        <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="product-dialog">បោះបង់</button><button class="button button-primary" type="submit">រក្សាទុក</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="sale-dialog" class="dialog">
+      <form id="sale-form" class="dialog-card">
+        <div class="dialog-heading"><div><p class="eyebrow">NEW SALE</p><h2>បង្កើតការលក់</h2></div><button class="icon-button" type="button" data-close="sale-dialog" aria-label="បិទ">×</button></div>
+        <label>ឈ្មោះអតិថិជន <span class="muted">(មិនចាំបាច់)</span><input name="customer_name" maxlength="120" placeholder="អតិថិជនដើរចូល"></label>
+        <div id="sale-items" class="sale-items"></div>
+        <button id="add-sale-item" class="button button-outline button-wide" type="button">＋ បន្ថែមមុខទំនិញ</button>
+        <p id="sale-total" class="sale-total">សរុប <strong>$0.00</strong></p>
+        <p id="sale-form-error" class="form-error" role="alert"></p>
+        <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="sale-dialog">បោះបង់</button><button class="button button-primary" type="submit">បញ្ជាក់ការលក់</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="account-dialog" class="dialog">
+      <form id="account-form" class="dialog-card">
+        <div class="dialog-heading"><div><p class="eyebrow">TEAM ACCESS</p><h2>បង្កើតគណនីថ្មី</h2></div><button class="icon-button" type="button" data-close="account-dialog" aria-label="បិទ">×</button></div>
+        <label>ឈ្មោះអ្នកប្រើប្រាស់<input name="username" minlength="3" maxlength="40" pattern="[A-Za-z0-9_.-]+" autocomplete="off" required></label>
+        <label>ពាក្យសម្ងាត់ដំបូង<input name="password" type="password" minlength="12" maxlength="256" autocomplete="new-password" required><small class="muted">ត្រូវមានយ៉ាងតិច ១២ តួអក្សរ</small></label>
+        <p class="muted">គណនីថ្មីមានសិទ្ធិបុគ្គលិក។ មានតែអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចបង្កើតគណនីបាន។</p>
+        <p id="account-form-error" class="form-error" role="alert"></p>
+        <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="account-dialog">បោះបង់</button><button class="button button-primary" type="submit">បង្កើតគណនី</button></div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+services:
+  computer-sales:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?Set ADMIN_USERNAME in the environment}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set a strong ADMIN_PASSWORD in the environment}
+      APP_ENV: production
+    volumes:
+      - sales-data:/var/lib/computer-sales
+    restart: unless-stopped
+
+volumes:
+  sales-data:
