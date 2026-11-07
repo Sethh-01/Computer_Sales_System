@@ -11,8 +11,12 @@ are kept separate and unchanged.
 - Product search, creation, editing, stock updates, and archiving.
 - Multi-item checkout that validates stock and records the sale atomically.
 - Order history with item and total details.
-- Admin-only staff account creation with individually salted password hashes.
-- Responsive background color themes saved in the current browser.
+- Customer storefront with email accounts, product search and filters, product
+  details, cart and checkout, order tracking, and verified-purchase reviews.
+- Demo payment choices for COD, ABA PayWay, KHQR, and cards; no real payment
+  processing or third-party identity provider is configured.
+- Animated responsive storefront with 3D product-card interactions and reduced
+  motion support.
 - Responsive interface, SQLite persistence, and a standard-library Python API.
 
 ## Run locally
@@ -26,72 +30,42 @@ $env:ADMIN_PASSWORD = "ChangeThisLocalPassword!"
 python -m apps.api.main
 ```
 
-Open <http://127.0.0.1:8000>. The initial catalog and administrator account
-are seeded on first run. Set `DATA_DIR` to change the SQLite database location
-and `PORT` to change the listening port. Local-development defaults are
-`admin` / `ChangeMe123!`; set your own password before using the app with real
-data. The administrator credentials seed the account only once; changing the
-environment variables later does not reset its stored password.
-
-After signing in as the administrator, open **គ្រប់គ្រងគណនី** and choose
-**បង្កើតគណនីថ្មី** to add staff accounts. Usernames are 3-40 letters, numbers,
-dots, dashes, or underscores. Passwords must be at least 12 characters.
-Accounts are stored in the local database with a per-account random salt and
-PBKDF2 password hash. Staff can use the shop features but cannot manage
-accounts. On mobile, use the bottom navigation to open account management; the
-administrator can also start account creation from the dashboard. Public
-sign-up is intentionally disabled.
-
-Use the **ពណ៌ផ្ទៃ** button on the sign-in screen or the palette button in the
-top bar to choose a background color. The selected theme is saved in that
-browser and remains available before and after signing in.
+Open <http://127.0.0.1:8000>. The initial catalog is seeded on first run. Set
+`DATA_DIR` to change the SQLite database location and `PORT` to change the
+listening port. Local-development defaults are `admin` / `ChangeMe123!`; set
+your own password before using the app with real data.
 
 The local server binds to loopback by default. Do not expose it directly to the
 internet. For a real deployment, place it behind an HTTPS reverse proxy, use a
 managed identity provider and a production-grade database, and set
 `APP_ENV=production` with a non-default `ADMIN_PASSWORD`.
 
-## Public deployment on Render
+## Security alerts
 
-This repository includes a Render Blueprint in `render.yaml`. The configuration
-uses a paid single-instance web service and a 1 GB persistent disk for SQLite.
-Render's free service filesystem is ephemeral and cannot keep this shop's
-database safely across restarts. A disk-backed service cannot be scaled to
-multiple instances; use PostgreSQL and shared session storage before scaling.
+The administrator dashboard records failed sign-ins, unauthorized requests,
+server errors, and health-check/database failures. It refreshes its event list
+every 15 seconds while the dashboard is open. Telegram delivery runs in a
+background worker and coalesces repeated events by category for 60 seconds by
+default; adjust `SECURITY_ALERT_COOLDOWN_SECONDS` if needed.
 
-To publish it:
+To enable Telegram delivery, create a bot with Telegram's official BotFather,
+obtain the destination chat ID, and configure both values as environment
+variables on the server. Never paste the bot token into source code, a browser,
+or chat:
 
-1. Put this project folder in a GitHub repository and push the code. Keep the
-   repository private if it contains business information.
-2. Sign in to Render, choose **New → Blueprint**, and connect that repository.
-3. Review the service plan and disk cost shown by Render before creating
-   anything. The Blueprint does not create resources or incur charges until
-   you approve the creation in your Render account.
-4. When prompted, set `ADMIN_USERNAME` and a unique `ADMIN_PASSWORD` with at
-   least 14 characters. Enter secrets only in Render's dashboard; never commit
-   them or send them in chat.
-5. After the first deploy is healthy, open the generated `*.onrender.com` URL,
-   sign in as the admin, and create staff accounts. Do not enable public
-   registration. Keep the admin password in a password manager.
-6. Configure a custom domain later in Render if desired. Render provides HTTPS
-   for its service hostname and for domains configured through its dashboard.
-7. Test a sale and confirm it remains after a redeploy. Keep separate database
-   backups for important sales records; a persistent disk is not a substitute
-   for an independently stored backup.
+```powershell
+$env:TELEGRAM_BOT_TOKEN = "your-bot-token"
+$env:TELEGRAM_CHAT_ID = "your-chat-id"
+$env:SECURITY_ALERT_COOLDOWN_SECONDS = "60"
+python -m apps.api.main
+```
 
-If you already created a Render web service with the native Python runtime
-instead of using the Blueprint, set its root directory to the repository root,
-build command to `pip install -r requirements.txt`, and start command to
-`python main.py`. The root launcher binds to `0.0.0.0` and uses Render's
-`PORT`. Set `DATA_DIR` to the mount path of a persistent disk (for example
-`/var/lib/computer-sales`) and set the admin credentials in Render's
-environment settings. Configure `/api/health` as the health check path.
-
-The app stays a single-shop, admin-managed system. Login has an in-process
-limit of five failed attempts per username per 15 minutes. Sessions are
-process-local and will expire on service restart. Before handling sensitive
-customer data or substantial real sales, migrate to a supported production
-identity/session service and a managed database with monitored backups.
+The dashboard indicates whether Telegram settings are present. Alert messages
+contain a generic event summary and API route only; passwords, request bodies,
+and IP addresses are not included. Test delivery with a failed sign-in after
+the server starts. Telegram delivery requires outbound HTTPS access. If the
+entire host or server process is offline, it cannot send its own alert; use an
+external uptime monitor against `/api/health` for that failure mode.
 
 ## Project layout
 
@@ -106,22 +80,43 @@ computer-sales-system/
 └── .github/workflows/   Automated API tests
 ```
 
+## Customer storefront
+
+Open the site and choose **ចូលទៅកាន់ហាងអនឡាញ** to browse the public product
+catalog. Customers can register with email and a password, save a delivery
+address, place orders, and review products after a purchase. Google and
+Facebook sign-in are not configured. Payment method options are demonstrations
+only; connect a provider's hosted checkout and configure its credentials
+separately before accepting payments.
+
+The storefront UI includes 3D hover effects and entrance animations. Animations
+are disabled for users who enable reduced motion in their operating system.
+
 ## API overview
 
-All API routes except `/api/health` and `POST /api/login` require the
-HTTP-only session cookie.
+Private API routes require the HTTP-only session cookie with the appropriate
+administrator or customer role. The catalog and customer sign-in/registration
+routes are public.
 
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/health` | Liveness check |
+| GET | `/api/session` | Current session role |
+| GET | `/api/security/events` | Administrator security event log |
 | POST | `/api/login` | Sign in |
 | POST | `/api/logout` | Sign out |
-| GET | `/api/me` | Current signed-in user and role |
 | GET | `/api/dashboard` | Dashboard metrics |
-| GET, POST | `/api/accounts` | List accounts or create a staff account (admin only) |
 | GET, POST | `/api/products` | List or create products |
 | PUT, DELETE | `/api/products/{id}` | Update or archive a product |
 | GET, POST | `/api/orders` | List orders or create a sale |
+| GET | `/api/storefront/products` | Search and filter the public catalog |
+| GET | `/api/storefront/products/{id}` | View product details and reviews |
+| POST | `/api/customer/register` | Create a customer account |
+| POST | `/api/customer/login` | Sign in to a customer account |
+| GET, PUT | `/api/customer/profile` | View or update customer profile |
+| GET, POST | `/api/customer/orders` | List or place customer orders |
+| GET | `/api/customer/orders/{order_number}` | Track an order |
+| GET, POST | `/api/products/{id}/reviews` | List or add verified-purchase reviews |
 
 Run the API test suite from this directory:
 

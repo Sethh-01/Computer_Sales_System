@@ -10,17 +10,17 @@
   </head>
   <body>
     <section id="login-screen" class="login-screen">
-      <button id="login-theme-button" class="button button-quiet login-theme-button" type="button" aria-haspopup="dialog" aria-controls="theme-dialog"><span aria-hidden="true">🎨</span> ពណ៌ផ្ទៃ</button>
       <form id="login-form" class="login-card">
         <div class="brand-mark">C<span>+</span></div>
         <p class="eyebrow">COMPUTER SHOP MANAGEMENT</p>
         <h1>សូមស្វាគមន៍</h1>
-        <p class="muted">ចូលគណនីដើម្បីបន្ត</p>
+        <p class="muted">ចូលគណនីអ្នកគ្រប់គ្រង ដើម្បីបន្ត</p>
         <label>ឈ្មោះអ្នកប្រើប្រាស់<input name="username" autocomplete="username" required></label>
         <label>ពាក្យសម្ងាត់<input name="password" type="password" autocomplete="current-password" required></label>
         <p id="login-error" class="form-error" role="alert"></p>
         <button class="button button-primary button-wide" type="submit">ចូលប្រើប្រាស់</button>
-        <p class="login-hint">ប្រើគណនីដែលបានកំណត់នៅលើម៉ាស៊ីនមេ។ មានតែអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចបង្កើតគណនីថ្មីបាន។</p>
+        <button id="open-storefront" class="button button-outline button-wide" type="button">ចូលទៅកាន់ហាងអនឡាញ</button>
+        <p class="login-hint">ប្រើគណនីដែលបានកំណត់នៅលើម៉ាស៊ីនមេ</p>
       </form>
     </section>
 
@@ -31,17 +31,15 @@
         <button class="nav-link active" data-view="dashboard"><span class="nav-icon">⌂</span>ផ្ទាំងគ្រប់គ្រង</button>
         <button class="nav-link" data-view="products"><span class="nav-icon">▦</span>ផលិតផល និងស្តុក</button>
         <button class="nav-link" data-view="orders"><span class="nav-icon">▤</span>ប្រវត្តិការលក់</button>
-        <button id="accounts-nav" class="nav-link hidden" data-view="accounts" aria-label="គ្រប់គ្រងគណនី"><span class="nav-icon">♙</span><span class="nav-full">គ្រប់គ្រងគណនី</span><span class="nav-short">គណនី</span></button>
         <div class="sidebar-bottom"><span class="status-dot"></span>ប្រព័ន្ធដំណើរការធម្មតា</div>
       </aside>
 
       <main class="main">
         <header class="topbar">
           <div class="mobile-brand"><span class="brand-mark">C<span>+</span></span> TechPoint</div>
-          <button id="theme-button" class="button button-quiet theme-button" type="button" aria-haspopup="dialog" aria-controls="theme-dialog" aria-label="ប្តូរពណ៌ផ្ទៃខាងក្រោយ"><span aria-hidden="true">🎨</span><span class="theme-button-label">ពណ៌ផ្ទៃខាងក្រោយ</span></button>
           <div class="topbar-spacer"></div>
           <span class="today-label" id="today-label"></span>
-          <div class="user-badge"><span id="user-avatar" class="avatar">A</span><span><b id="user-name">អ្នកប្រើប្រាស់</b><small id="user-role">Staff</small></span></div>
+          <div class="user-badge"><span class="avatar">A</span><span><b>អ្នកគ្រប់គ្រង</b><small>Administrator</small></span></div>
           <button id="logout-button" class="button button-quiet" type="button">ចាកចេញ</button>
         </header>
 
@@ -49,10 +47,7 @@
           <section id="view-dashboard" class="view">
             <div class="page-heading">
               <div><p class="eyebrow">OVERVIEW</p><h1>ផ្ទាំងគ្រប់គ្រង</h1><p class="muted">សង្ខេបសកម្មភាពហាងរបស់អ្នក</p></div>
-              <div class="heading-actions">
-                <button id="dashboard-account-button" class="button button-outline hidden" type="button">＋ បង្កើតគណនីថ្មី</button>
-                <button class="button button-primary" data-go="products" type="button"><span>＋</span> លក់ផលិតផល</button>
-              </div>
+              <button class="button button-primary" data-go="products" type="button"><span>＋</span> លក់ផលិតផល</button>
             </div>
             <div class="stats-grid">
               <article class="stat-card"><div class="stat-top"><span>ចំណូលថ្ងៃនេះ</span><span class="stat-icon green">$</span></div><strong id="metric-revenue">$0.00</strong><small>សរុបការលក់ថ្ងៃនេះ</small></article>
@@ -60,6 +55,13 @@
               <article class="stat-card"><div class="stat-top"><span>ផលិតផលសកម្ម</span><span class="stat-icon purple">▦</span></div><strong id="metric-products">0</strong><small>ប្រភេទកំពុងដាក់លក់</small></article>
               <article class="stat-card"><div class="stat-top"><span>ស្តុកជិតអស់</span><span class="stat-icon orange">!</span></div><strong id="metric-low-stock">0</strong><small>ស្តុក ៥ ឬតិចជាងនេះ</small></article>
             </div>
+            <section class="security-panel panel">
+              <div class="security-panel-heading">
+                <div><p class="eyebrow">SECURITY MONITOR</p><h2>សុវត្ថិភាព និងការជូនដំណឹង</h2><p id="security-channel-status" class="muted">កំពុងពិនិត្យស្ថានភាព Telegram...</p></div>
+                <span id="security-live-badge" class="security-live-badge"><span></span> LIVE</span>
+              </div>
+              <div id="security-event-list" class="security-event-list"><p class="empty-state">មិនទាន់មានព្រឹត្តិការណ៍ទេ</p></div>
+            </section>
             <div class="section-heading"><div><h2>ផលិតផលក្នុងស្តុក</h2><p class="muted">ពិនិត្យមើលផលិតផលដែលកំពុងដាក់លក់</p></div><button class="text-button" data-go="products" type="button">មើលទាំងអស់ →</button></div>
             <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>ផលិតផល</th><th>ប្រភេទ</th><th>តម្លៃ</th><th>ស្តុក</th><th>ស្ថានភាព</th></tr></thead><tbody id="dashboard-products"></tbody></table></div></div>
             <div class="section-heading"><div><h2>ការលក់ថ្មីៗ</h2><p class="muted">ប្រតិបត្តិការថ្មីបំផុតរបស់ហាង</p></div><button class="text-button" data-go="orders" type="button">មើលប្រវត្តិ →</button></div>
@@ -74,16 +76,96 @@
 
           <section id="view-orders" class="view hidden">
             <div class="page-heading"><div><p class="eyebrow">SALES</p><h1>ប្រវត្តិការលក់</h1><p class="muted">បញ្ជីការបញ្ជាទិញ និងប្រតិបត្តិការទាំងអស់</p></div><button class="button button-primary" data-go="products" type="button">＋ បង្កើតការលក់</button></div>
-            <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>លេខបញ្ជាទិញ</th><th>អតិថិជន</th><th>ទំនិញ</th><th>កាលបរិច្ឆេទ</th><th>សរុប</th></tr></thead><tbody id="orders-table"></tbody></table></div></div>
-          </section>
-
-          <section id="view-accounts" class="view hidden">
-            <div class="page-heading account-heading"><div><p class="eyebrow">TEAM ACCESS</p><h1>គ្រប់គ្រងគណនី</h1><p class="muted">បង្កើតគណនីបុគ្គលិកសម្រាប់ចូលប្រើប្រព័ន្ធ</p></div><button id="add-account-button" class="button button-primary" type="button">＋ បង្កើតគណនីថ្មី</button></div>
-            <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>ឈ្មោះអ្នកប្រើប្រាស់</th><th>តួនាទី</th><th>កាលបរិច្ឆេទបង្កើត</th></tr></thead><tbody id="accounts-table"></tbody></table></div></div>
+            <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>លេខបញ្ជាទិញ</th><th>អតិថិជន</th><th>ទំនិញ</th><th>កាលបរិច្ឆេទ</th><th>សរុប</th><th>ស្ថានភាពដឹកជញ្ជូន</th></tr></thead><tbody id="orders-table"></tbody></table></div></div>
           </section>
         </div>
       </main>
     </div>
+
+    <section id="storefront-screen" class="storefront-screen hidden">
+      <header class="storefront-header">
+        <a class="brand" href="#" id="store-home"><span class="brand-mark">C<span>+</span></span><span>Tech<span class="brand-light">Point</span></span></a>
+        <div class="storefront-actions">
+          <button id="customer-orders-button" class="button button-quiet hidden" type="button">ការបញ្ជាទិញ</button>
+          <button id="customer-profile-button" class="button button-quiet hidden" type="button">គណនីខ្ញុំ</button>
+          <button id="customer-login-button" class="button button-outline" type="button">ចូលគណនី</button>
+          <button id="customer-logout-button" class="button button-quiet hidden" type="button">ចាកចេញ</button>
+          <button id="cart-button" class="button button-primary" type="button">កន្ត្រក (<span id="cart-count">0</span>)</button>
+          <button id="admin-login-button" class="button button-quiet" type="button">អ្នកគ្រប់គ្រង</button>
+        </div>
+      </header>
+      <main class="storefront-content">
+        <section class="store-hero">
+          <p class="eyebrow">TECHPOINT ONLINE STORE</p>
+          <h1>ស្វែងរកឧបករណ៍បច្ចេកវិទ្យាដែលអ្នកត្រូវការ</h1>
+          <p class="muted">កុំព្យូទ័រ គ្រឿងបន្លាស់ និងសេវាកម្មដឹកជញ្ជូនដល់ទីតាំង</p>
+        </section>
+        <div class="store-filters panel">
+          <label class="search-box"><span>⌕</span><input id="store-search" type="search" placeholder="ស្វែងរកផលិតផល ឬម៉ាក..."></label>
+          <select id="store-category" aria-label="ប្រភេទ"><option value="">គ្រប់ប្រភេទ</option></select>
+          <select id="store-brand" aria-label="ម៉ាក"><option value="">គ្រប់ម៉ាក</option></select>
+          <input id="store-min-price" type="number" min="0" step="0.01" placeholder="តម្លៃចាប់ពី" aria-label="តម្លៃទាបបំផុត">
+          <input id="store-max-price" type="number" min="0" step="0.01" placeholder="តម្លៃដល់" aria-label="តម្លៃខ្ពស់បំផុត">
+        </div>
+        <p id="store-message" class="muted" role="status"></p>
+        <div id="store-products" class="store-product-grid"></div>
+        <section id="customer-orders-section" class="customer-orders-section hidden">
+          <div class="section-heading"><div><h2>ការបញ្ជាទិញរបស់ខ្ញុំ</h2><p class="muted">ស្ថានភាព និងព័ត៌មានតាមដានការដឹកជញ្ជូន</p></div><button id="close-orders" class="text-button" type="button">ត្រឡប់ទៅទំនិញ</button></div>
+          <div id="customer-orders-list" class="customer-orders-list"></div>
+        </section>
+      </main>
+    </section>
+
+    <dialog id="customer-auth-dialog" class="dialog">
+      <form id="customer-auth-form" class="dialog-card">
+        <div class="dialog-heading"><div><p class="eyebrow">CUSTOMER ACCOUNT</p><h2 id="customer-auth-title">ចូលគណនីអតិថិជន</h2></div><button class="icon-button" type="button" data-close="customer-auth-dialog" aria-label="បិទ">×</button></div>
+        <div id="customer-register-fields" class="hidden">
+          <label>ឈ្មោះពេញ<input name="full_name" maxlength="120" autocomplete="name"></label>
+          <label>លេខទូរសព្ទ<input name="phone" maxlength="40" autocomplete="tel"></label>
+        </div>
+        <label>អ៊ីមែល<input name="email" type="email" maxlength="290" autocomplete="email" required></label>
+        <label>ពាក្យសម្ងាត់<input name="password" type="password" minlength="10" maxlength="256" autocomplete="current-password" required></label>
+        <p id="customer-auth-error" class="form-error" role="alert"></p>
+        <div class="dialog-actions"><button id="customer-auth-toggle" class="button button-quiet" type="button">បង្កើតគណនីថ្មី</button><button class="button button-primary" type="submit">ចូលគណនី</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="product-detail-dialog" class="dialog detail-dialog">
+      <div id="product-detail-content" class="dialog-card"></div>
+    </dialog>
+
+    <dialog id="cart-dialog" class="dialog">
+      <div class="dialog-card">
+        <div class="dialog-heading"><div><p class="eyebrow">YOUR CART</p><h2>កន្ត្រកទំនិញ</h2></div><button class="icon-button" type="button" data-close="cart-dialog" aria-label="បិទ">×</button></div>
+        <div id="cart-items" class="cart-items"></div>
+        <p id="cart-total" class="sale-total">សរុប <strong>$0.00</strong></p>
+        <p id="cart-error" class="form-error" role="alert"></p>
+        <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="cart-dialog">បន្តទិញ</button><button id="checkout-button" class="button button-primary" type="button">បន្តទៅការទូទាត់</button></div>
+      </div>
+    </dialog>
+
+    <dialog id="checkout-dialog" class="dialog">
+      <form id="checkout-form" class="dialog-card">
+        <div class="dialog-heading"><div><p class="eyebrow">CHECKOUT</p><h2>អាសយដ្ឋាន និងការទូទាត់</h2></div><button class="icon-button" type="button" data-close="checkout-dialog" aria-label="បិទ">×</button></div>
+        <label>អាសយដ្ឋានដឹកជញ្ជូន<textarea name="shipping_address" rows="3" maxlength="500" required></textarea></label>
+        <label>វិធីបង់ប្រាក់<select name="payment_method" required><option value="cash">បង់ប្រាក់ពេលទទួលទំនិញ (COD)</option><option value="aba_payway">ABA PayWay (សាកល្បង)</option><option value="khqr">KHQR (សាកល្បង)</option><option value="card">Visa / Mastercard (សាកល្បង)</option></select></label>
+        <p class="payment-demo-note">របៀបសាកល្បង៖ មិនមានការភ្ជាប់ធនាគារ ឬកាត់ប្រាក់ពិតទេ។</p>
+        <p id="checkout-error" class="form-error" role="alert"></p>
+        <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="checkout-dialog">ត្រឡប់</button><button class="button button-primary" type="submit">បញ្ជាក់ការបញ្ជាទិញ</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="customer-profile-dialog" class="dialog">
+      <form id="customer-profile-form" class="dialog-card">
+        <div class="dialog-heading"><div><p class="eyebrow">MY PROFILE</p><h2>ព័ត៌មានគណនី</h2></div><button class="icon-button" type="button" data-close="customer-profile-dialog" aria-label="បិទ">×</button></div>
+        <label>ឈ្មោះពេញ<input name="full_name" maxlength="120" required></label>
+        <label>អ៊ីមែល<input name="email" type="email" disabled></label>
+        <label>លេខទូរសព្ទ<input name="phone" maxlength="40"></label>
+        <label>អាសយដ្ឋានដឹកជញ្ជូន<textarea name="address" rows="3" maxlength="500"></textarea></label>
+        <p id="profile-error" class="form-error" role="alert"></p>
+        <div class="dialog-actions"><button class="button button-primary" type="submit">រក្សាទុកព័ត៌មាន</button></div>
+      </form>
+    </dialog>
 
     <dialog id="product-dialog" class="dialog">
       <form id="product-form" class="dialog-card">
@@ -91,6 +173,8 @@
         <input name="id" type="hidden">
         <label>ឈ្មោះផលិតផល<input name="name" maxlength="120" required></label>
         <div class="form-row"><label>SKU<input name="sku" maxlength="40" required></label><label>ប្រភេទ<input name="category" maxlength="60" placeholder="Laptop, Monitor..." required></label></div>
+        <div class="form-row"><label>ម៉ាក<input name="brand" maxlength="60"></label><label>តំណរូបភាព (HTTPS)<input name="image_url" maxlength="500" type="url"></label></div>
+        <label>ព័ត៌មានលម្អិត<input name="description" maxlength="1000"></label>
         <div class="form-row"><label>តម្លៃ ($)<input name="price" type="number" min="0" max="1000000" step="0.01" required></label><label>ចំនួនស្តុក<input name="stock" type="number" min="0" max="1000000" step="1" required></label></div>
         <p id="product-form-error" class="form-error" role="alert"></p>
         <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="product-dialog">បោះបង់</button><button class="button button-primary" type="submit">រក្សាទុក</button></div>
@@ -107,30 +191,6 @@
         <p id="sale-form-error" class="form-error" role="alert"></p>
         <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="sale-dialog">បោះបង់</button><button class="button button-primary" type="submit">បញ្ជាក់ការលក់</button></div>
       </form>
-    </dialog>
-
-    <dialog id="account-dialog" class="dialog">
-      <form id="account-form" class="dialog-card">
-        <div class="dialog-heading"><div><p class="eyebrow">TEAM ACCESS</p><h2>បង្កើតគណនីថ្មី</h2></div><button class="icon-button" type="button" data-close="account-dialog" aria-label="បិទ">×</button></div>
-        <label>ឈ្មោះអ្នកប្រើប្រាស់<input name="username" minlength="3" maxlength="40" pattern="[A-Za-z0-9_.\-]+" autocomplete="off" required></label>
-        <label>ពាក្យសម្ងាត់ដំបូង<input name="password" type="password" minlength="12" maxlength="256" autocomplete="new-password" required><small class="muted">ត្រូវមានយ៉ាងតិច ១២ តួអក្សរ</small></label>
-        <p class="muted">គណនីថ្មីមានសិទ្ធិបុគ្គលិក។ មានតែអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចបង្កើតគណនីបាន។</p>
-        <p id="account-form-error" class="form-error" role="alert"></p>
-        <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="account-dialog">បោះបង់</button><button class="button button-primary" type="submit">បង្កើតគណនី</button></div>
-      </form>
-    </dialog>
-
-    <dialog id="theme-dialog" class="dialog theme-dialog">
-      <div class="dialog-card">
-        <div class="dialog-heading"><div><p class="eyebrow">APPEARANCE</p><h2>ប្តូរពណ៌ផ្ទៃខាងក្រោយ</h2></div><button class="icon-button" type="button" data-close="theme-dialog" aria-label="បិទ">×</button></div>
-        <div class="theme-options" role="group" aria-label="ជ្រើសរើសពណ៌">
-          <button class="theme-option" type="button" data-theme-choice="default" aria-pressed="true"><span class="theme-swatch swatch-default"></span>លំនាំដើម</button>
-          <button class="theme-option" type="button" data-theme-choice="blue" aria-pressed="false"><span class="theme-swatch swatch-blue"></span>ខៀវស្រាល</button>
-          <button class="theme-option" type="button" data-theme-choice="green" aria-pressed="false"><span class="theme-swatch swatch-green"></span>បៃតងស្រាល</button>
-          <button class="theme-option" type="button" data-theme-choice="lavender" aria-pressed="false"><span class="theme-swatch swatch-lavender"></span>ស្វាយស្រាល</button>
-          <button class="theme-option" type="button" data-theme-choice="sand" aria-pressed="false"><span class="theme-swatch swatch-sand"></span>ក្រែមស្រាល</button>
-        </div>
-      </div>
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>

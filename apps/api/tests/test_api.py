@@ -4,17 +4,19 @@ import os
 import tempfile
 import threading
 import unittest
+from functools import partial
 from http.server import ThreadingHTTPServer
 from urllib.error import HTTPError
+from urllib.parse import parse_qs
 from urllib.request import HTTPCookieProcessor, Request, build_opener
-import sys
+from unittest.mock import MagicMock, patch
 from pathlib import Path
+import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from apps.api import auth
-from apps.api import main as api_main
+from apps.api import alerts, auth
 from apps.api.db import initialize_database
 from apps.api.main import SalesHandler
 
@@ -27,7 +29,6 @@ class SalesAPITests(unittest.TestCase):
         os.environ["ADMIN_USERNAME"] = "test-admin"
         os.environ["ADMIN_PASSWORD"] = "test-password-123!"
         initialize_database()
-        auth.ensure_admin_account()
         cls.server = ThreadingHTTPServer(("127.0.0.1", 0), SalesHandler)
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()
@@ -83,92 +84,42 @@ class SalesAPITests(unittest.TestCase):
         )
         self.assertEqual(response.status, 401)
 
-    def test_login_is_rate_limited_after_repeated_failures(self):
-        api_main._login_attempts.clear()
-        for _ in range(5):
-            response = self.request(
-                "/api/login",
-                {"username": "test-admin", "password": "wrong"},
-                method="POST",
-            )
-            self.assertEqual(response.status, 401)
-        limited = self.request(
+    def test_security_events_are_recorded_and_admin_only(self):
+        response = self.request(
             "/api/login",
-            {"username": "test-admin", "password": "test-password-123!"},
+            {"username": "not-the-admin", "password": "wrong"},
             method="POST",
         )
-        self.assertEqual(limited.status, 429)
-        api_main._login_attempts.clear()
+        self.assertEqual(response.status, 401)
+        events = self.body(self.request("/api/security/events"))["events"]
+        event = next(item for item in events if item["category"] == "Failed sign-in")
+        self.assertEqual(event["severity"], "warning")
+        self.assertNotIn("not-the-admin", event["message"])
 
-    def test_admin_can_create_staff_account_but_staff_cannot_manage_accounts(self):
-        created = self.request(
-            "/api/accounts",
-            {
-                "username": "cashier-1",
-                "password": "cashier-password-123",
-                "role": "admin",
-            },
-            "POST",
-        )
-        self.assertEqual(created.status, 201)
-        account = self.body(created)["account"]
-        self.assertEqual(account["role"], "staff")
-
-        staff_client = build_opener(HTTPCookieProcessor(http.cookiejar.CookieJar()))
-        login = staff_client.open(
-            Request(
-                self.url + "/api/login",
-                data=json.dumps(
-                    {"username": "cashier-1", "password": "cashier-password-123"}
-                ).encode(),
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            ),
-            timeout=3,
-        )
-        self.assertEqual(login.status, 200)
-        self.assertEqual(json.loads(login.read())["user"]["role"], "staff")
-
+        unauthenticated = build_opener()
         try:
-            staff_client.open(self.url + "/api/accounts")
-            self.fail("Staff must not be allowed to manage accounts.")
+            unauthenticated.open(self.url + "/api/security/events")
+            self.fail("Security events should require administrator authentication.")
         except HTTPError as error:
-            self.assertEqual(error.code, 403)
-        try:
-            staff_client.open(
-                Request(
-                    self.url + "/api/accounts",
-                    data=json.dumps(
-                        {"username": "cashier-4", "password": "cashier-password-123"}
-                    ).encode(),
-                    headers={"Content-Type": "application/json"},
-                    method="POST",
-                ),
-                timeout=3,
-            )
-            self.fail("Staff must not be allowed to create accounts.")
-        except HTTPError as error:
-            self.assertEqual(error.code, 403)
+            self.assertEqual(error.code, 401)
 
-    def test_duplicate_usernames_and_short_passwords_are_rejected(self):
-        first = self.request(
-            "/api/accounts",
-            {"username": "cashier-2", "password": "cashier-password-123"},
-            "POST",
-        )
-        self.assertEqual(first.status, 201)
-        duplicate = self.request(
-            "/api/accounts",
-            {"username": "CASHIER-2", "password": "another-password-123"},
-            "POST",
-        )
-        self.assertEqual(duplicate.status, 409)
-        short_password = self.request(
-            "/api/accounts",
-            {"username": "cashier-3", "password": "short"},
-            "POST",
-        )
-        self.assertEqual(short_password.status, 400)
+    def test_telegram_alert_message_excludes_secrets(self):
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"ok": true}'
+        with patch.dict(
+            os.environ,
+            {"TELEGRAM_BOT_TOKEN": "test-token", "TELEGRAM_CHAT_ID": "test-chat"},
+        ):
+            with patch("apps.api.alerts.urlopen", return_value=response) as send:
+                alerts._send_telegram(
+                    "Failed sign-in", "warning", "An administrator sign-in attempt failed."
+                )
+        request = send.call_args.args[0]
+        text = parse_qs(request.data.decode("utf-8"))["text"][0]
+        self.assertIn("Failed sign-in", text)
+        self.assertNotIn("test-token", text)
+        self.assertNotIn("test-chat", text)
+        self.assertNotIn("password", text.lower())
 
     def test_create_product_rejects_duplicate_sku(self):
         product = {
@@ -208,6 +159,63 @@ class SalesAPITests(unittest.TestCase):
         refreshed = self.body(self.request("/api/products"))["products"]
         self.assertEqual(next(item for item in refreshed if item["id"] == mouse["id"])["stock"], mouse["stock"])
         self.assertEqual(len(self.body(self.request("/api/orders"))["orders"]), before_orders)
+
+    def test_customer_checkout_tracking_and_verified_review(self):
+        customer = build_opener(HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+        def customer_request(path, payload=None, method=None):
+            data = json.dumps(payload).encode() if payload is not None else None
+            request = Request(self.url + path, data=data, method=method)
+            if data is not None:
+                request.add_header("Content-Type", "application/json")
+            try:
+                return customer.open(request, timeout=5)
+            except HTTPError as error:
+                return error
+
+        registration = customer_request(
+            "/api/customer/register",
+            {
+                "email": "buyer@example.test",
+                "password": "customer-password-123",
+                "full_name": "Test Buyer",
+                "phone": "012345678",
+            },
+            "POST",
+        )
+        self.assertEqual(registration.status, 201)
+        products = self.body(self.request("/api/products"))["products"]
+        product = next(item for item in products if item["sku"] == "ACC-KB-01")
+        checkout = customer_request(
+            "/api/customer/orders",
+            {
+                "items": [{"product_id": product["id"], "quantity": 1}],
+                "shipping_address": "Phnom Penh",
+                "payment_method": "khqr",
+            },
+            "POST",
+        )
+        self.assertEqual(checkout.status, 201)
+        order_number = self.body(checkout)["order"]["order_number"]
+        tracked = self.body(customer_request(f"/api/customer/orders/{order_number}"))["order"]
+        self.assertEqual(tracked["status"], "processing")
+        self.assertEqual(tracked["payment_method"], "khqr")
+        self.assertEqual(tracked["shipping_address"], "Phnom Penh")
+
+        forbidden_admin_route = customer_request("/api/dashboard")
+        self.assertEqual(forbidden_admin_route.status, 403)
+        review = customer_request(
+            f"/api/products/{product['id']}/reviews",
+            {"rating": 5, "comment": "Works well"},
+            "POST",
+        )
+        self.assertEqual(review.status, 201)
+        details = self.body(customer_request(f"/api/storefront/products/{product['id']}"))
+        self.assertEqual(details["product"]["reviews"][0]["comment"], "Works well")
+        duplicate_review = customer_request(
+            f"/api/products/{product['id']}/reviews", {"rating": 4}, "POST"
+        )
+        self.assertEqual(duplicate_review.status, 409)
 
 
 if __name__ == "__main__":

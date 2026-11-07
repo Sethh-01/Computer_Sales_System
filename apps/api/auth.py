@@ -1,26 +1,20 @@
 import hashlib
 import hmac
 import os
-import re
 import secrets
 import time
-
-from apps.api.db import connect
 
 
 SESSION_COOKIE = "computer_sales_session"
 SESSION_TTL_SECONDS = 8 * 60 * 60
 _PASSWORD_ITERATIONS = 310_000
-_DUMMY_SALT = b"computer-sales-dummy"
-_DUMMY_HASH = hashlib.pbkdf2_hmac(
-    "sha256", b"not-a-real-password", _DUMMY_SALT, _PASSWORD_ITERATIONS
-)
-_sessions: dict[str, dict] = {}
+_sessions: dict[str, tuple[float, str, str]] = {}
 
 
-def _configured_credentials() -> tuple[str, str]:
-    username = os.environ.get("ADMIN_USERNAME", "admin").strip()
+def _configured_credentials() -> tuple[str, bytes, bytes]:
+    username = os.environ.get("ADMIN_USERNAME", "admin")
     password = os.environ.get("ADMIN_PASSWORD", "ChangeMe123!")
+    salt = os.environ.get("PASSWORD_SALT")
     if not username or not password:
         raise RuntimeError("ADMIN_USERNAME and ADMIN_PASSWORD must not be empty")
     if os.environ.get("APP_ENV") == "production":
@@ -29,106 +23,52 @@ def _configured_credentials() -> tuple[str, str]:
                 "Production requires a non-default ADMIN_PASSWORD "
                 "of at least 14 characters"
             )
-    return username, password
+        if not salt:
+            raise RuntimeError("Production requires a persistent PASSWORD_SALT")
+    salt_bytes = salt.encode("utf-8") if salt else b"computer-sales-local-v1"
+    password_hash = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt_bytes, _PASSWORD_ITERATIONS
+    )
+    return username, salt_bytes, password_hash
 
 
-def _password_hash(password: str, salt: bytes) -> bytes:
-    return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, _PASSWORD_ITERATIONS)
+def verify_credentials(username: str, password: str) -> bool:
+    expected_user, salt, expected_hash = _configured_credentials()
+    submitted_hash = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt, _PASSWORD_ITERATIONS
+    )
+    return hmac.compare_digest(username, expected_user) and hmac.compare_digest(
+        submitted_hash, expected_hash
+    )
 
 
-def ensure_admin_account() -> None:
-    username, password = _configured_credentials()
-    with connect() as connection:
-        row = connection.execute(
-            "SELECT role FROM users WHERE username = ? COLLATE NOCASE",
-            (username,),
-        ).fetchone()
-        if row:
-            if row["role"] != "admin":
-                raise RuntimeError(
-                    "Configured ADMIN_USERNAME is already assigned to a non-admin account"
-                )
-            return
-        salt = secrets.token_bytes(16)
-        connection.execute(
-            "INSERT INTO users (username, password_salt, password_hash, role) "
-            "VALUES (?, ?, ?, 'admin')",
-            (username, salt, _password_hash(password, salt)),
-        )
-
-
-def verify_credentials(username: str, password: str) -> dict | None:
-    with connect() as connection:
-        user = connection.execute(
-            "SELECT username, password_salt, password_hash, role "
-            "FROM users WHERE username = ? COLLATE NOCASE",
-            (username,),
-        ).fetchone()
-    salt = bytes(user["password_salt"]) if user else _DUMMY_SALT
-    expected_hash = bytes(user["password_hash"]) if user else _DUMMY_HASH
-    submitted_hash = _password_hash(password, salt)
-    if not hmac.compare_digest(submitted_hash, expected_hash) or user is None:
-        return None
-    return {"username": user["username"], "role": user["role"]}
-
-
-def create_account(username: str, password: str) -> dict:
-    username = username.strip()
-    if not re.fullmatch(r"[A-Za-z0-9_.-]{3,40}", username):
-        raise ValueError("Username must be 3-40 letters, numbers, dots, dashes, or underscores.")
-    if len(password) < 12 or len(password) > 256:
-        raise ValueError("Password must be between 12 and 256 characters.")
-    salt = secrets.token_bytes(16)
-    password_hash = _password_hash(password, salt)
-    with connect() as connection:
-        cursor = connection.execute(
-            "INSERT INTO users (username, password_salt, password_hash, role) "
-            "VALUES (?, ?, ?, 'staff')",
-            (username, salt, password_hash),
-        )
-        return {
-            "id": cursor.lastrowid,
-            "username": username,
-            "role": "staff",
-        }
-
-
-def list_accounts() -> list[dict]:
-    with connect() as connection:
-        rows = connection.execute(
-            "SELECT id, username, role, created_at FROM users ORDER BY id"
-        ).fetchall()
-    return [dict(row) for row in rows]
-
-
-def create_session(username: str, role: str) -> str:
+def create_session(username: str = "admin", role: str = "admin") -> str:
     now = time.time()
-    expired = [token for token, session in _sessions.items() if session["expires_at"] <= now]
+    expired = [token for token, session in _sessions.items() if session[0] <= now]
     for token in expired:
         del _sessions[token]
     token = secrets.token_urlsafe(32)
-    _sessions[token] = {
-        "username": username,
-        "role": role,
-        "expires_at": now + SESSION_TTL_SECONDS,
-    }
+    _sessions[token] = (now + SESSION_TTL_SECONDS, username, role)
     return token
 
 
-def get_session(token: str | None) -> dict | None:
+def is_valid_session(token: str | None) -> bool:
     if not token:
-        return None
+        return False
     session = _sessions.get(token)
     if session is None:
-        return None
-    if session["expires_at"] <= time.time():
+        return False
+    if session[0] <= time.time():
         del _sessions[token]
+        return False
+    return True
+
+
+def session_identity(token: str | None) -> tuple[str, str] | None:
+    if not is_valid_session(token):
         return None
-    return {"username": session["username"], "role": session["role"]}
-
-
-def is_valid_session(token: str | None) -> bool:
-    return get_session(token) is not None
+    session = _sessions.get(token)
+    return (session[1], session[2]) if session else None
 
 
 def revoke_session(token: str | None) -> None:
